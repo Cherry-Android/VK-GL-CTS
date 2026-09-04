@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export WORKSPACE=`pwd`
+test_apis="$1"
 
 cd $WORKSPACE
 
@@ -36,15 +37,21 @@ python3 external/fetch_video_encode_samples.py
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
 
-# Enable video tests with full functionality
-#cmake -DDEQP_DISABLE_VK_VIDEO_TESTS=OFF
-
 # Delete build cache
 find . -name CMakeCache.txt -delete
 find . -name CMakeFiles -type d -exec rm -rf {} +
 
-# Remove old deqp-android-build
-rm -rf /tmp/deqp-android-build
-
-# Android: Build type apk
-python3 scripts/android/build_apk.py --sdk ${WORKSPACE}/android-studio --ndk ${WORKSPACE}/android-ndk-r27d --abis arm64-v8a
+# Android: Build type app
+case "$test_apis" in
+    vulkancts)
+        echo "Build Vulkan CTS tests"
+        python3 scripts/android/build_apk.py --sdk ${WORKSPACE}/android-studio --ndk ${WORKSPACE}/android-ndk-r27d --abis arm64-v8a
+        ;;
+    openglcts)
+        echo "Build OpenGL CTS tests"
+        python scripts/android/build_apk.py --target=openglcts --sdk ${WORKSPACE}/android-studio --ndk ${WORKSPACE}/android-ndk-r27d --abis arm64-v8a
+        ;;
+    *)
+        echo "No conformance tests"
+        ;;
+esac
